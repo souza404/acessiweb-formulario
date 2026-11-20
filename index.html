@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="pt-BR" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Formulário de validação do AcessiWeb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --fundo: #0b0b0f; --painel: #17171f; --borda: #55556a; --texto: #ffffff; --texto2: #d4d4dc;
+  --destaque: #ffd60a; --sobre-destaque: #000000; --erro: #ff8a80; --ok: #7ee2a8;
+}
+@media (prefers-color-scheme: light) {
+  :root { color-scheme: light; --fundo: #ffffff; --painel: #f3f3f6; --borda: #5c5c70; --texto: #101014; --texto2: #3a3a48;
+    --destaque: #6b5200; --sobre-destaque: #ffffff; --erro: #a8170b; --ok: #0b6b3a; }
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: 125%; }
+body { margin: 0; background: var(--fundo); color: var(--texto); line-height: 1.5;
+  font-family: "Atkinson Hyperlegible", Verdana, "Segoe UI", Arial, sans-serif; }
+main { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
+h1 { font-size: 1.9rem; line-height: 1.15; margin: 0.5rem 0 1rem; }
+h2 { font-size: 1.3rem; margin: 2.2rem 0 0.6rem; color: var(--destaque); }
+p { margin: 0 0 1rem; max-width: 62ch; }
+.marca { display: flex; align-items: center; gap: 0.6rem; font-weight: 700; color: var(--destaque); }
+.marca svg { width: 2.2rem; height: 2.2rem; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 4px solid var(--destaque); outline-offset: 3px; }
+
+button, .botao { font: inherit; font-weight: 700; cursor: pointer; border-radius: 0.6rem; padding: 0.85rem 1.2rem;
+  border: 3px solid var(--destaque); background: transparent; color: var(--texto); min-height: 3.2rem; }
+button.principal { background: var(--destaque); color: var(--sobre-destaque); }
+.acoes { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 1.2rem 0; }
+.inicio .acoes { flex-direction: column; align-items: stretch; max-width: 30rem; }
+.inicio button { font-size: 1.15rem; text-align: left; }
+.inicio button small { display: block; font-weight: 400; color: inherit; opacity: 0.9; }
+.nota { color: var(--texto2); font-size: 0.9rem; }
+
+/* ── modo por voz ── */
+.progresso { color: var(--texto2); font-weight: 700; }
+.pergunta-voz { font-size: 1.6rem; line-height: 1.25; font-weight: 700; margin: 0.6rem 0 1rem; max-width: 30ch; }
+.opcoes-voz { list-style: none; padding: 0; margin: 0 0 1.2rem; display: grid; gap: 0.5rem; }
+.opcoes-voz li { display: flex; gap: 0.8rem; align-items: baseline; padding: 0.6rem 0.9rem; border: 2px solid var(--borda); border-radius: 0.6rem; }
+.opcoes-voz b { color: var(--destaque); min-width: 1.2rem; }
+.opcoes-voz li.escolhida { border-color: var(--destaque); background: var(--painel); }
+.estado { display: flex; align-items: center; gap: 0.8rem; padding: 0.9rem 1rem; border-radius: 0.6rem; background: var(--painel);
+  border-left: 0.5rem solid var(--borda); font-weight: 700; min-height: 3.6rem; }
+.estado[data-fase="ouvindo"] { border-left-color: var(--destaque); }
+.estado[data-fase="ok"] { border-left-color: var(--ok); }
+.estado[data-fase="erro"] { border-left-color: var(--erro); }
+.teclas { color: var(--texto2); font-size: 0.9rem; margin-top: 1.2rem; }
+kbd { font: inherit; font-weight: 700; border: 2px solid var(--borda); border-radius: 0.35rem; padding: 0 0.4rem; }
+
+/* ── modo convencional ── */
+fieldset { border: 2px solid var(--borda); border-radius: 0.7rem; padding: 1rem 1.1rem; margin: 0 0 1.1rem; min-width: 0; }
+legend { font-weight: 700; padding: 0 0.4rem; max-width: 100%; }
+.obrig { font-weight: 400; color: var(--texto2); }
+.opcao { display: flex; gap: 0.7rem; align-items: center; padding: 0.45rem 0; }
+.opcao input { width: 1.5rem; height: 1.5rem; flex: 0 0 auto; accent-color: var(--destaque); }
+.aberta label { display: block; font-weight: 700; margin-bottom: 0.5rem; }
+textarea { width: 100%; min-height: 7rem; font: inherit; color: var(--texto); background: var(--fundo);
+  border: 2px solid var(--borda); border-radius: 0.6rem; padding: 0.7rem; }
+.com-erro { border-color: var(--erro); }
+.msg-erro { color: var(--erro); font-weight: 700; margin: 0.4rem 0 0; }
+.resumo-erros { border: 3px solid var(--erro); border-radius: 0.7rem; padding: 1rem 1.2rem; margin: 1rem 0; }
+.resumo-erros a { color: var(--texto); }
+.aviso { border: 3px solid var(--destaque); border-radius: 0.7rem; padding: 1rem 1.2rem; margin: 1rem 0; }
+pre { white-space: pre-wrap; word-break: break-word; background: var(--painel); padding: 1rem; border-radius: 0.6rem; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="marca">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+    AcessiWeb
+  </div>
+
+  <!-- Tela inicial -->
+  <section id="tela-inicio" class="inicio" aria-labelledby="titulo">
+    <h1 id="titulo">Formulário de validação do AcessiWeb</h1>
+    <p>Conte como foi usar o AcessiWeb. São 28 perguntas e leva cerca de dez minutos. Você pode responder falando ou digitando.</p>
+    <div class="acoes">
+      <button type="button" class="principal" id="btn-voz">Responder por voz
+        <small>Eu leio as perguntas e você fala as respostas. Aperte Enter para começar.</small></button>
+      <button type="button" id="btn-digitar">Responder digitando
+        <small>Formulário comum, indicado para quem usa leitor de tela.</small></button>
+    </div>
+    <p id="sem-voz" class="aviso" hidden>Este navegador não tem reconhecimento de voz. Use o Google Chrome para responder falando, ou responda digitando.</p>
+    <p class="nota">No modo por voz, o navegador pede acesso ao microfone e envia o áudio ao serviço de reconhecimento de fala do Google para transcrever. Só o texto das respostas é guardado.</p>
+  </section>
+
+  <!-- Modo por voz -->
+  <section id="tela-voz" hidden aria-label="Perguntas por voz">
+    <p class="progresso" id="voz-progresso"></p>
+    <p class="pergunta-voz" id="voz-pergunta"></p>
+    <ol class="opcoes-voz" id="voz-opcoes"></ol>
+    <div class="estado" id="voz-estado" data-fase="falando">Preparando…</div>
+    <div class="acoes">
+      <button type="button" id="voz-repetir">Repetir pergunta</button>
+      <button type="button" id="voz-voltar">Pergunta anterior</button>
+      <button type="button" id="voz-pular" hidden>Pular</button>
+      <button type="button" id="voz-digitar">Responder digitando</button>
+    </div>
+    <p class="teclas">Pelo teclado: <kbd>1</kbd> a <kbd>5</kbd> escolhem a opção, <kbd>R</kbd> repete, <kbd>Backspace</kbd> volta, <kbd>P</kbd> pula perguntas opcionais e <kbd>Esc</kbd> muda para o formulário digitado.</p>
+  </section>
+
+  <!-- Modo convencional -->
+  <section id="tela-form" hidden aria-labelledby="titulo-form">
+    <h1 id="titulo-form" tabindex="-1">Formulário de validação do AcessiWeb</h1>
+    <p id="form-motivo" class="aviso" hidden></p>
+    <p>As perguntas marcadas como obrigatórias precisam de resposta. O envio só acontece quando você aciona o botão Enviar respostas, no final.</p>
+    <div id="resumo-erros" class="resumo-erros" role="alert" tabindex="-1" hidden></div>
+    <form id="form" novalidate></form>
+  </section>
+
+  <!-- Fim -->
+  <section id="tela-fim" hidden aria-labelledby="titulo-fim">
+    <h1 id="titulo-fim" tabindex="-1"></h1>
+    <p id="fim-texto"></p>
+    <div class="acoes"><button type="button" class="principal" id="fim-tentar" hidden>Tentar enviar de novo</button></div>
+    <pre id="fim-dados" hidden></pre>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* ═══════════ Configuração ═══════════
+   Tabela criada pelo arquivo tabela-respostas.sql. A anon key é pública por natureza:
+   a tabela só aceita inserção, ninguém consegue ler as respostas com ela. */
+const CONFIG = {
+  SUPABASE_URL: "https://xxqudvyjsuwvhnhheaxx.supabase.co",
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4cXVkdnlqc3V3dmhuaGhlYXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzNzAxNDAsImV4cCI6MjEwNzk0NjE0MH0.bnM6Bvmia7qOZU28zP_U39XtGskmG2dwXjzmYoqPLHc",
+  TABELA: "acessiweb_respostas",
+  VERSAO: "1.0",
+};
+const MODO_TESTE = new URLSearchParams(location.search).has("teste"); // ?teste=1 mostra as respostas em vez de enviar
+const RASCUNHO = "acessiweb-form-rascunho-v1";
+
+/* ═══════════ Questionário ═══════════ */
+const TAREFA = ["Consegui sem dificuldade", "Consegui com dificuldade", "Não consegui", "Não testei"];
+const SUS = { tipo: "escala", min: "discordo totalmente", max: "concordo totalmente", bloco: "Satisfação" };
+const PERGUNTAS = [
+  { id: "consentimento", tipo: "escolha", bloco: "Consentimento", opcoes: ["Sim", "Não"],
+    texto: "Este formulário faz parte de um trabalho de conclusão de curso da PUC Minas sobre o AcessiWeb. As respostas são anônimas, usadas apenas na pesquisa, e nenhum áudio é guardado. Você concorda em participar?" },
+
+  { id: "visao", tipo: "escolha", bloco: "Perfil", texto: "Como você descreve a sua visão?",
+    opcoes: ["Cegueira", "Baixa visão", "Outra condição visual", "Não tenho deficiência visual"] },
+  { id: "recurso", tipo: "escolha", bloco: "Perfil", texto: "Qual recurso de acessibilidade você mais usa no computador?",
+    opcoes: ["NVDA", "JAWS", "Ampliador de tela ou alto contraste", "Outro", "Nenhum"], falas: ["ene vê dê á", "jós", "", "", ""] },
+  { id: "leitor_ligado", tipo: "escolha", bloco: "Perfil", texto: "Durante o teste, você usou um leitor de tela junto com o AcessiWeb?", opcoes: ["Sim", "Não"] },
+
+  { id: "instalou", tipo: "escolha", bloco: "Instalação", texto: "Você conseguiu instalar o AcessiWeb?",
+    opcoes: ["Sim, sem ajuda", "Sim, com ajuda de outra pessoa", "Não consegui"] },
+  { id: "instrucoes", tipo: "escolha", bloco: "Instalação", texto: "O vídeo e as instruções foram suficientes para instalar e começar a usar?",
+    opcoes: ["Sim, totalmente", "Parcialmente", "Não"] },
+
+  { id: "t_selecao", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, intro: "Agora, seis tarefas. Para cada uma, diga se conseguiu.",
+    texto: "Ouvir a leitura de um texto selecionado." },
+  { id: "t_pagina", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, mesmas: true, texto: "Ouvir a leitura da página inteira." },
+  { id: "t_tab", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, mesmas: true, texto: "Navegar com a tecla Tab ouvindo cada elemento." },
+  { id: "t_imagem", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, mesmas: true, texto: "Ouvir a descrição de uma imagem." },
+  { id: "t_contraste", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, mesmas: true, texto: "Ligar e desligar o alto contraste." },
+  { id: "t_fonte", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, mesmas: true, texto: "Aumentar ou diminuir o tamanho da fonte." },
+
+  { id: "teclado", tipo: "escolha", bloco: "Qualidade do uso", texto: "Você conseguiu usar o AcessiWeb somente com o teclado?",
+    opcoes: ["Sim, tudo pelo teclado", "Em parte, precisei do mouse em algumas funções", "Não, precisei do mouse para quase tudo"] },
+  { id: "voz_clara", tipo: "escala", bloco: "Qualidade do uso", texto: "A voz da leitura foi fácil de entender?", min: "muito difícil", max: "muito fácil", explica: true },
+  { id: "descricao_correta", tipo: "escolha", bloco: "Qualidade do uso", texto: "As descrições de imagem corresponderam ao que havia nas imagens?",
+    opcoes: ["Sim", "Parcialmente", "Não", "Não testei"] },
+  { id: "aviso_erro", tipo: "escolha", bloco: "Qualidade do uso", texto: "Quando algo não funcionou, o AcessiWeb avisou você de forma compreensível?",
+    opcoes: ["Sim, fui avisado", "Não fui avisado", "Nada deixou de funcionar"] },
+  { id: "espera", tipo: "escala", bloco: "Qualidade do uso", texto: "O tempo de espera até a voz começar foi aceitável?", min: "inaceitável", max: "totalmente aceitável", explica: true },
+
+  { ...SUS, id: "sus1", explica: true, intro: "Agora, dez frases sobre o AcessiWeb. Para cada uma, diga uma nota de 1 a 5.", texto: "Eu acho que gostaria de usar o AcessiWeb com frequência." },
+  { ...SUS, id: "sus2", texto: "Eu acho o AcessiWeb desnecessariamente complexo." },
+  { ...SUS, id: "sus3", texto: "Eu achei o AcessiWeb fácil de usar." },
+  { ...SUS, id: "sus4", texto: "Eu acho que precisaria da ajuda de uma pessoa com conhecimentos técnicos para usar o AcessiWeb." },
+  { ...SUS, id: "sus5", texto: "Eu acho que as várias funções do AcessiWeb estão muito bem integradas." },
+  { ...SUS, id: "sus6", texto: "Eu acho que o AcessiWeb apresenta muita inconsistência." },
+  { ...SUS, id: "sus7", texto: "Eu imagino que as pessoas aprenderão a usar o AcessiWeb rapidamente." },
+  { ...SUS, id: "sus8", texto: "Eu achei o AcessiWeb atrapalhado de usar." },
+  { ...SUS, id: "sus9", texto: "Eu me senti confiante ao usar o AcessiWeb." },
+  { ...SUS, id: "sus10", texto: "Eu precisei aprender várias coisas novas antes de conseguir usar o AcessiWeb." },
+
+  { id: "barreira", tipo: "aberta", bloco: "Barreiras e sugestões", opcional: true,
+    texto: "Você encontrou alguma barreira que impediu a conclusão de uma tarefa? Se sim, descreva." },
+  { id: "comentarios", tipo: "aberta", bloco: "Barreiras e sugestões", opcional: true, texto: "Comentários ou sugestões de melhoria." },
+];
+const TOTAL = PERGUNTAS.length - 1; // o consentimento não conta como pergunta
+
+/* ═══════════ Estado ═══════════ */
+const $ = (s) => document.querySelector(s);
+let respostas = {};
+let modosUsados = new Set();
+let inicio = Date.now();
+try {
+  const salvo = JSON.parse(localStorage.getItem(RASCUNHO) || "null");
+  if (salvo && salvo.versao === CONFIG.VERSAO) { respostas = salvo.respostas || {}; inicio = salvo.inicio || inicio; }
+} catch { /* sem rascunho */ }
+const tinhaRascunho = Object.keys(respostas).length > 0;
+
+function salvarRascunho() {
+  try { localStorage.setItem(RASCUNHO, JSON.stringify({ versao: CONFIG.VERSAO, respostas, inicio })); } catch { /* armazenamento indisponível */ }
+}
+function mostrar(tela) {
+  for (const id of ["tela-inicio", "tela-voz", "tela-form", "tela-fim"]) $("#" + id).hidden = id !== tela;
+}
+
+/* ═══════════ Interpretação das falas ═══════════ */
+const semAcento = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const palavras = (s) => semAcento(s).replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
+const NUMEROS = { "1": 1, um: 1, uma: 1, primeira: 1, primeiro: 1, "2": 2, dois: 2, duas: 2, segunda: 2, segundo: 2,
+  "3": 3, tres: 3, terceira: 3, terceiro: 3, "4": 4, quatro: 4, quarta: 4, quarto: 4, "5": 5, cinco: 5, quinta: 5, quinto: 5 };
+
+function lerNumero(fala, max) {
+  for (const p of palavras(fala)) if (NUMEROS[p] && NUMEROS[p] <= max) return NUMEROS[p];
+  return 0;
+}
+/** Índice (a partir de 1) da opção falada, ou 0 se não der para decidir. */
+function lerOpcao(fala, opcoes) {
+  const ditas = palavras(fala);
+  if (ditas.length === 0) return 0;
+  const dito = ditas.join(" ");
+  const alvos = opcoes.map((o) => palavras(o));
+
+  // 1. A pessoa disse exatamente o texto de uma opção
+  const igual = alvos.findIndex((a) => a.join(" ") === dito);
+  if (igual >= 0) return igual + 1;
+
+  // 2. Só um número: "dois", "opção 2", "a segunda"
+  const enchimento = ["opcao", "numero", "a", "o", "e", "resposta"];
+  const semEnchimento = ditas.filter((p) => !enchimento.includes(p));
+  if (semEnchimento.length === 1 && NUMEROS[semEnchimento[0]] <= opcoes.length) return NUMEROS[semEnchimento[0]];
+
+  // 3. Só "sim" ou "não", quando uma única opção começa assim
+  if (dito === "sim" || dito === "nao") {
+    const comecam = alvos.map((a, k) => (a[0] === dito ? k : -1)).filter((k) => k >= 0);
+    return comecam.length === 1 ? comecam[0] + 1 : 0;
+  }
+
+  // 4. Semelhança com o texto das opções (uma negação nunca casa com uma afirmação)
+  const conj = new Set(ditas);
+  const notas = alvos.map((a) => {
+    const alvo = new Set(a);
+    if (alvo.has("nao") !== conj.has("nao")) return 0;
+    let comuns = 0;
+    for (const p of alvo) if (conj.has(p)) comuns++;
+    // média entre "quanto do que foi dito está na opção" e "quanto da opção foi dito"
+    return (comuns / conj.size + comuns / alvo.size) / 2;
+  });
+  const melhor = Math.max(...notas);
+  if (melhor >= 0.4 && notas.filter((n) => n === melhor).length === 1) return notas.indexOf(melhor) + 1;
+
+  // 5. Um número no meio da frase ("acho que a três"); "um" e "uma" ficam de fora por serem artigos
+  for (const p of ditas) if (NUMEROS[p] && NUMEROS[p] <= opcoes.length && p !== "um" && p !== "uma") return NUMEROS[p];
+  return 0;
+}
+function lerComando(fala) {
+  const p = palavras(fala);
+  if (p.length > 4) return "";
+  if (p.some((x) => ["repetir", "repete", "repita", "repetindo"].includes(x))) return "repetir";
+  if (p.some((x) => ["voltar", "volta", "volte", "anterior"].includes(x))) return "voltar";
+  if (p.some((x) => ["pular", "pula", "pule"].includes(x))) return "pular";
+  if (p.some((x) => ["digitar", "digitando"].includes(x))) return "digitar";
+  return "";
+}
+
+/* ═══════════ Voz do navegador ═══════════ */
+const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
+let reconhecedor = null;
+let audioCtx = null;
+
+let audioNuvem = null;
+
+/** Espera o navegador carregar a lista de vozes (ela chega depois da página). */
+let vozesProntas = null;
+function carregarVozes() {
+  if (!vozesProntas) vozesProntas = new Promise((resolve) => {
+    const tem = () => speechSynthesis.getVoices().length > 0;
+    if (tem()) { resolve(); return; }
+    const limite = setTimeout(resolve, 2500);
+    speechSynthesis.addEventListener("voiceschanged", () => { if (tem()) { clearTimeout(limite); resolve(); } });
+  });
+  return vozesProntas;
+}
+/** Voz em português do Brasil, ou null. Sem ela o navegador leria o texto com sotaque de outro idioma. */
+function vozPtBr() {
+  const vozes = speechSynthesis.getVoices();
+  const idioma = (v) => v.lang.replace("_", "-").toLowerCase();
+  const br = vozes.filter((v) => idioma(v) === "pt-br");
+  return br.find((v) => /google/i.test(v.name)) || br.find((v) => /francisca|thalita|antonio|luciana|maria/i.test(v.name)) || br[0] ||
+    vozes.find((v) => idioma(v).startsWith("pt")) || null;
+}
+function falarTrecho(texto, voz) {
+  return new Promise((resolve) => {
+    const u = new SpeechSynthesisUtterance(texto);
+    u.voice = voz;
+    u.lang = voz.lang.replace("_", "-");
+    u.rate = 1;
+    let acabou = false;
+    const fim = () => { if (!acabou) { acabou = true; clearTimeout(limite); resolve(); } };
+    // Alguns navegadores não avisam o fim da fala; o limite evita que o formulário trave
+    const limite = setTimeout(fim, 4000 + texto.length * 110);
+    u.onend = fim; u.onerror = fim;
+    speechSynthesis.speak(u);
+  });
+}
+/** Reserva para computadores sem voz em português: usa a voz do próprio AcessiWeb (Edge Function). */
+async function falarPelaNuvem(texto, vivo) {
+  try {
+    const resp = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/text-to-speech`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: CONFIG.SUPABASE_ANON_KEY, Authorization: `Bearer ${CONFIG.SUPABASE_ANON_KEY}` },
+      body: JSON.stringify({ text: texto }),
+    });
+    if (!resp.ok) return false;
+    const url = URL.createObjectURL(await resp.blob());
+    if (!vivo()) return true;
+    return await new Promise((resolve) => {
+      const a = new Audio(url);
+      audioNuvem = a;
+      a.onended = () => resolve(true);
+      a.onerror = () => resolve(false);
+      a.onpause = () => resolve(true); // interrompido por tecla ou botão
+      a.play().catch(() => resolve(false));
+    });
+  } catch { return false; }
+}
+/** Entrada e saída por voz. Os testes automatizados trocam este objeto. */
+let IO = {
+  /** Devolve false quando não há como falar em português. */
+  async falar(texto, vivo) {
+    await carregarVozes();
+    const voz = vozPtBr();
+    if (!voz) return falarPelaNuvem(texto, vivo);
+    // Frases curtas: falas longas são cortadas em alguns navegadores
+    for (const trecho of texto.match(/[^.!?]+[.!?]*/g) || [texto]) {
+      if (!vivo()) return true;
+      if (trecho.trim()) await falarTrecho(trecho.trim(), voz);
+    }
+    return true;
+  },
+  ouvir(longa) {
+    return new Promise((resolve) => {
+      const r = new Reconhecimento();
+      reconhecedor = r;
+      r.lang = "pt-BR"; r.interimResults = false; r.continuous = !!longa;
+      let texto = "", acabou = false, silencio = null;
+      const fim = (valor) => { if (!acabou) { acabou = true; clearTimeout(silencio); clearTimeout(teto); try { r.stop(); } catch {} resolve(valor); } };
+      const teto = setTimeout(() => fim(texto || null), longa ? 60000 : 12000);
+      r.onresult = (e) => {
+        for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) texto += (texto ? " " : "") + e.results[i][0].transcript.trim();
+        if (!longa) fim(texto || null);
+        else { clearTimeout(silencio); silencio = setTimeout(() => fim(texto || null), 2800); } // resposta aberta: espera a pessoa terminar
+      };
+      r.onerror = (e) => fim(["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error) ? { negado: true } : (texto || null));
+      r.onend = () => fim(texto || null);
+      try { r.start(); } catch { fim(null); }
+    });
+  },
+  sinal() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.frequency.value = 880; g.gain.value = 0.15; o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + 0.13);
+    } catch { /* sem áudio */ }
+  },
+  parar() {
+    speechSynthesis.cancel();
+    try { audioNuvem && audioNuvem.pause(); } catch {}
+    try { reconhecedor && reconhecedor.abort(); } catch {}
+  },
+};
+
+/* ═══════════ Conversa por voz ═══════════ */
+let turno = 0;          // muda quando uma tecla ou botão interrompe a fala ou a escuta
+let aoTeclar = null;
+
+function estado(fase, texto) { const e = $("#voz-estado"); e.dataset.fase = fase; e.textContent = texto; }
+
+/** Executa uma etapa de fala e escuta, que pode ser interrompida por uma tecla ou botão. */
+function etapa(fn) {
+  return new Promise((resolve) => {
+    const meu = ++turno;
+    const vivo = () => meu === turno;
+    aoTeclar = (tecla) => { if (!vivo()) return; turno++; aoTeclar = null; IO.parar(); resolve({ tecla }); };
+    fn(vivo).then((v) => { if (vivo()) { aoTeclar = null; resolve(v); } });
+  });
+}
+function interromper(tecla) { if (aoTeclar) aoTeclar(tecla); }
+
+function enunciado(q, i) {
+  let t = "";
+  if (q.intro) t += q.intro + " ";
+  if (i > 0) t += `Pergunta ${i} de ${TOTAL}. `;
+  t += q.texto + " ";
+  if (q.tipo === "escolha") {
+    if (q.mesmas) t += "As opções são as mesmas: 1, sem dificuldade. 2, com dificuldade. 3, não consegui. 4, não testei.";
+    else t += q.opcoes.map((o, k) => `${k + 1}: ${(q.falas && q.falas[k]) || o}.`).join(" ") + (i <= 1 ? " Diga o número ou a resposta." : "");
+  } else if (q.tipo === "escala") {
+    t += q.explica ? `Diga um número de 1 a 5. 1 é ${q.min}, e 5 é ${q.max}.` : "De 1 a 5?";
+  } else {
+    t += "Fale a sua resposta depois do sinal." + (q.opcional ? " Se não quiser responder, diga pular." : "");
+  }
+  return t;
+}
+
+function desenharPergunta(q, i) {
+  $("#voz-progresso").textContent = i === 0 ? "Consentimento" : `Pergunta ${i} de ${TOTAL} — ${q.bloco}`;
+  $("#voz-pergunta").textContent = q.texto;
+  const lista = $("#voz-opcoes");
+  lista.textContent = "";
+  const itens = q.tipo === "escolha" ? q.opcoes : q.tipo === "escala" ? [q.min, "", "", "", q.max] : [];
+  itens.forEach((texto, k) => {
+    const li = document.createElement("li"), b = document.createElement("b"), s = document.createElement("span");
+    b.textContent = k + 1; s.textContent = texto;
+    li.append(b, s); lista.append(li);
+  });
+  $("#voz-pular").hidden = !q.opcional;
+}
+
+/** Faz uma pergunta até obter resposta ou comando. */
+async function perguntar(q, i, antes) {
+  let dizer = antes + enunciado(q, i);
+  let falhas = 0;
+  let pendente = null; // resposta aberta aguardando confirmação
+  const max = q.tipo === "escolha" ? q.opcoes.length : 5;
+
+  for (;;) {
+    const r = await etapa(async (vivo) => {
+      if (dizer) { estado("falando", "Falando…"); if ((await IO.falar(dizer, vivo)) === false) return { semVoz: true }; }
+      if (!vivo()) return null;
+      IO.sinal(); estado("ouvindo", "Ouvindo… pode falar.");
+      return IO.ouvir(q.tipo === "aberta" && !pendente);
+    });
+    dizer = "";
+
+    // Teclado e botões
+    if (r && r.tecla) {
+      const t = r.tecla;
+      if (t === "repetir") { pendente = null; dizer = enunciado(q, i); continue; }
+      if (t === "voltar" || t === "digitar") return { cmd: t };
+      if (t === "pular") { if (q.opcional) return { cmd: "pular" }; dizer = "Esta pergunta é obrigatória. "; continue; }
+      if (typeof t === "number") {
+        if (q.tipo !== "aberta" && t >= 1 && t <= max) return aceitar(q, t);
+        dizer = q.tipo === "aberta" ? "Esta pergunta é respondida falando. " : `Escolha um número de 1 a ${max}. `;
+      }
+      continue;
+    }
+    if (r && r.semVoz) return { cmd: "digitar", motivo: "Este computador não tem voz em português instalada, então o formulário mudou para o modo digitado." };
+    if (r && r.negado) return { cmd: "digitar", motivo: "O navegador não liberou o microfone, então o formulário mudou para o modo digitado." };
+
+    // Silêncio
+    if (!r) {
+      falhas++;
+      estado("erro", "Não ouvi a resposta.");
+      if (falhas >= 3) { falhas = 0; dizer = "Não consegui ouvir. Você pode apertar o número da opção no teclado, ou a tecla Esc para responder digitando. " + enunciado(q, i); }
+      else dizer = "Não ouvi a sua resposta. ";
+      continue;
+    }
+
+    // Fala reconhecida
+    estado("ok", `Entendi: “${r}”`);
+    if (pendente) {
+      const p = palavras(r);
+      if (p.some((x) => ["confirmar", "confirmo", "confirma", "sim", "isso", "correto", "certo"].includes(x))) return { valor: pendente, rotulo: "resposta registrada" };
+      pendente = null;
+      dizer = "Tudo bem, vamos de novo. " + q.texto + " Fale depois do sinal.";
+      continue;
+    }
+    const cmd = lerComando(r);
+    if (cmd === "repetir") { dizer = enunciado(q, i); continue; }
+    if (cmd === "voltar" || cmd === "digitar") return { cmd };
+    if (cmd === "pular") { if (q.opcional) return { cmd: "pular" }; dizer = "Esta pergunta é obrigatória. "; continue; }
+
+    if (q.tipo === "aberta") {
+      pendente = r;
+      dizer = `Você disse: ${r}. Diga confirmar, ou diga repetir para gravar de novo.`;
+      continue;
+    }
+    const n = q.tipo === "escolha" ? lerOpcao(r, q.opcoes) : lerNumero(r, 5);
+    if (n) return aceitar(q, n);
+    falhas++;
+    dizer = falhas >= 3
+      ? (falhas = 0, "Ainda não entendi. Você pode apertar o número no teclado. " + enunciado(q, i))
+      : `Não entendi. Diga um número de 1 a ${max}. `;
+  }
+}
+function aceitar(q, n) {
+  const itens = $("#voz-opcoes").children;
+  if (itens[n - 1]) itens[n - 1].classList.add("escolhida");
+  return q.tipo === "escolha" ? { valor: q.opcoes[n - 1], rotulo: q.opcoes[n - 1] } : { valor: n, rotulo: String(n) };
+}
+
+const ABERTURA = "Olá! Este é o formulário de validação do AcessiWeb. Eu vou ler cada pergunta. Depois do sinal sonoro, fale a sua resposta. " +
+  "Você pode dizer repetir, para ouvir de novo, ou voltar, para a pergunta anterior. Também pode apertar o número da opção no teclado, " +
+  "ou a tecla Esc para responder digitando. São 28 perguntas, cerca de dez minutos. ";
+
+async function conversar() {
+  modosUsados.add("voz");
+  mostrar("tela-voz");
+  let i = PERGUNTAS.findIndex((q) => !(q.id in respostas));
+  if (i < 0) i = PERGUNTAS.length;
+  let antes = tinhaRascunho && i > 0 ? "Olá de novo. Vamos continuar de onde você parou. " : ABERTURA;
+
+  while (i < PERGUNTAS.length) {
+    const q = PERGUNTAS[i];
+    desenharPergunta(q, i);
+    const r = await perguntar(q, i, antes);
+    antes = "";
+    if (r.cmd === "digitar") { abrirFormulario(r.motivo); return; }
+    if (r.cmd === "voltar") { if (i > 0) { i--; antes = "Voltando. "; } else antes = "Esta é a primeira pergunta. "; continue; }
+    if (r.cmd === "pular") { respostas[q.id] = ""; salvarRascunho(); antes = "Pergunta pulada. "; i++; continue; }
+
+    respostas[q.id] = r.valor;
+    salvarRascunho();
+    if (q.id === "consentimento" && r.valor === "Não") { await encerrarSemConsentimento(true); return; }
+    antes = `Anotado: ${r.rotulo}. `;
+    i++;
+  }
+  await finalizar(antes, true);
+}
+
+/* ═══════════ Envio ═══════════ */
+function pontuacaoSus() {
+  let soma = 0;
+  for (let k = 1; k <= 10; k++) {
+    const v = Number(respostas["sus" + k]);
+    if (!(v >= 1 && v <= 5)) return null;
+    soma += k % 2 ? v - 1 : 5 - v;
+  }
+  return soma * 2.5;
+}
+function montarRegistro() {
+  const r = { ...respostas };
+  delete r.consentimento;
+  return {
+    versao: CONFIG.VERSAO,
+    modo: modosUsados.size > 1 ? "misto" : [...modosUsados][0] || "digitado",
+    respostas: r,
+    sus: pontuacaoSus(),
+    duracao_segundos: Math.round((Date.now() - inicio) / 1000),
+    navegador: navigator.userAgent,
+  };
+}
+async function enviar(registro) {
+  if (MODO_TESTE) return true;
+  try {
+    const resp = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/${CONFIG.TABELA}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: CONFIG.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${CONFIG.SUPABASE_ANON_KEY}`, Prefer: "return=minimal" },
+      body: JSON.stringify(registro),
+    });
+    return resp.ok;
+  } catch { return false; }
+}
+function dizerSolto(texto) { return etapa((vivo) => IO.falar(texto, vivo)); }
+
+async function finalizar(antes, porVoz) {
+  const registro = montarRegistro();
+  if (porVoz) { estado("falando", "Enviando…"); await dizerSolto(antes + "Chegamos ao fim. Estou enviando as suas respostas."); }
+  const ok = await enviar(registro);
+  mostrar("tela-fim");
+  $("#fim-tentar").hidden = ok;
+  if (ok) {
+    try { localStorage.removeItem(RASCUNHO); } catch {}
+    $("#titulo-fim").textContent = "Respostas enviadas";
+    $("#fim-texto").textContent = "Muito obrigado por participar. Você já pode fechar esta página.";
+    if (MODO_TESTE) { $("#fim-dados").hidden = false; $("#fim-dados").textContent = JSON.stringify(registro, null, 2); }
+  } else {
+    $("#titulo-fim").textContent = "Não foi possível enviar";
+    $("#fim-texto").textContent = "Verifique a conexão com a internet. As suas respostas ficaram salvas neste navegador. Acione o botão Tentar enviar de novo.";
+    $("#fim-tentar").onclick = () => finalizar("", porVoz);
+  }
+  $("#titulo-fim").focus();
+  if (porVoz) await dizerSolto(ok ? "Respostas enviadas. Muito obrigado por participar. Você já pode fechar esta página."
+    : "Não consegui enviar agora. As suas respostas ficaram salvas neste navegador. Aperte Enter para tentar de novo.");
+  if (!ok) $("#fim-tentar").focus();
+}
+async function encerrarSemConsentimento(porVoz) {
+  respostas = {};
+  try { localStorage.removeItem(RASCUNHO); } catch {}
+  mostrar("tela-fim");
+  $("#titulo-fim").textContent = "Participação não registrada";
+  $("#fim-texto").textContent = "Sem o seu consentimento, nenhuma resposta é guardada. Obrigado pelo seu tempo.";
+  $("#titulo-fim").focus();
+  if (porVoz) await dizerSolto("Tudo bem. Sem o seu consentimento, nenhuma resposta é guardada. Obrigado pelo seu tempo.");
+}
+
+/* ═══════════ Modo convencional ═══════════ */
+function construirFormulario() {
+  const form = $("#form");
+  if (form.childElementCount) return;
+  let blocoAtual = "";
+  PERGUNTAS.forEach((q, i) => {
+    if (q.bloco !== blocoAtual) {
+      blocoAtual = q.bloco;
+      const h = document.createElement("h2"); h.textContent = q.bloco; form.append(h);
+    }
+    const numero = i === 0 ? "" : `${i}. `;
+    if (q.tipo === "aberta") {
+      const d = document.createElement("div"); d.className = "aberta"; d.id = "campo-" + q.id;
+      const l = document.createElement("label"); l.htmlFor = "r-" + q.id; l.textContent = `${numero}${q.texto} (opcional)`;
+      const t = document.createElement("textarea"); t.id = "r-" + q.id; t.name = q.id; t.value = respostas[q.id] || "";
+      d.append(l, t); form.append(d);
+      return;
+    }
+    const f = document.createElement("fieldset"); f.id = "campo-" + q.id;
+    const leg = document.createElement("legend");
+    leg.textContent = numero + q.texto + " ";
+    const ob = document.createElement("span"); ob.className = "obrig"; ob.textContent = "(obrigatória)"; leg.append(ob);
+    f.append(leg);
+    const itens = q.tipo === "escolha" ? q.opcoes.map((o) => [o, o])
+      : [1, 2, 3, 4, 5].map((n) => [n, n === 1 ? `1 — ${q.min}` : n === 5 ? `5 — ${q.max}` : String(n)]);
+    itens.forEach(([valor, rotulo], k) => {
+      const l = document.createElement("label"); l.className = "opcao";
+      const inp = document.createElement("input"); inp.type = "radio"; inp.name = q.id; inp.value = valor; inp.id = `r-${q.id}-${k}`;
+      inp.required = true; inp.setAttribute("aria-required", "true");
+      if (String(respostas[q.id]) === String(valor)) inp.checked = true;
+      const s = document.createElement("span"); s.textContent = rotulo;
+      l.append(inp, s); f.append(l);
+    });
+    form.append(f);
+  });
+  const acoes = document.createElement("div"); acoes.className = "acoes";
+  const b = document.createElement("button"); b.type = "submit"; b.className = "principal"; b.textContent = "Enviar respostas";
+  acoes.append(b); form.append(acoes);
+
+  form.addEventListener("change", () => { lerFormulario(); salvarRascunho(); });
+  form.addEventListener("submit", (e) => { e.preventDefault(); validarEEnviar(); });
+}
+function lerFormulario() {
+  const form = $("#form");
+  for (const q of PERGUNTAS) {
+    if (q.tipo === "aberta") { respostas[q.id] = form.elements[q.id].value.trim(); continue; }
+    const marcado = form.querySelector(`input[name="${q.id}"]:checked`);
+    if (marcado) respostas[q.id] = q.tipo === "escala" ? Number(marcado.value) : marcado.value;
+    else delete respostas[q.id];
+  }
+}
+function validarEEnviar() {
+  lerFormulario();
+  const form = $("#form"), resumo = $("#resumo-erros");
+  form.querySelectorAll(".msg-erro").forEach((m) => m.remove());
+  form.querySelectorAll(".com-erro").forEach((c) => c.classList.remove("com-erro"));
+  form.querySelectorAll("[aria-invalid]").forEach((c) => c.removeAttribute("aria-invalid"));
+
+  if (respostas.consentimento === "Não") { encerrarSemConsentimento(false); return; }
+  const faltam = PERGUNTAS.filter((q) => q.tipo !== "aberta" && !(q.id in respostas));
+  if (faltam.length) {
+    resumo.textContent = "";
+    const p = document.createElement("p");
+    p.textContent = faltam.length === 1 ? "Falta responder 1 pergunta obrigatória:" : `Falta responder ${faltam.length} perguntas obrigatórias:`;
+    const ul = document.createElement("ul");
+    for (const q of faltam) {
+      const campo = $("#campo-" + q.id), i = PERGUNTAS.indexOf(q);
+      campo.classList.add("com-erro");
+      campo.querySelectorAll("input").forEach((inp) => inp.setAttribute("aria-invalid", "true"));
+      const m = document.createElement("p"); m.className = "msg-erro"; m.textContent = "Erro: escolha uma opção."; campo.append(m);
+      const li = document.createElement("li"), a = document.createElement("a");
+      a.href = `#r-${q.id}-0`; a.textContent = i === 0 ? "Consentimento" : `Pergunta ${i}: ${q.texto}`;
+      a.addEventListener("click", (e) => { e.preventDefault(); $(`#r-${q.id}-0`).focus(); });
+      li.append(a); ul.append(li);
+    }
+    resumo.append(p, ul); resumo.hidden = false; resumo.focus();
+    return;
+  }
+  resumo.hidden = true;
+  finalizar("", false);
+}
+function abrirFormulario(motivo) {
+  turno++; aoTeclar = null; IO.parar();
+  modosUsados.add("digitado");
+  construirFormulario();
+  $("#form-motivo").hidden = !motivo; $("#form-motivo").textContent = motivo || "";
+  mostrar("tela-form");
+  $("#titulo-form").focus();
+}
+
+/* ═══════════ Ligações ═══════════ */
+const temVoz = !!Reconhecimento && "speechSynthesis" in window;
+if (!temVoz) { $("#sem-voz").hidden = false; $("#btn-voz").disabled = true; $("#btn-digitar").classList.add("principal"); $("#btn-voz").classList.remove("principal"); }
+if ("speechSynthesis" in window) speechSynthesis.getVoices(); // começa a carregar as vozes
+
+$("#btn-voz").addEventListener("click", () => conversar());
+$("#btn-digitar").addEventListener("click", () => abrirFormulario(""));
+$("#voz-repetir").addEventListener("click", () => interromper("repetir"));
+$("#voz-voltar").addEventListener("click", () => interromper("voltar"));
+$("#voz-pular").addEventListener("click", () => interromper("pular"));
+$("#voz-digitar").addEventListener("click", () => abrirFormulario(""));
+
+document.addEventListener("keydown", (e) => {
+  if ($("#tela-voz").hidden || e.ctrlKey || e.altKey || e.metaKey) return;
+  if (/^[1-9]$/.test(e.key)) { e.preventDefault(); interromper(Number(e.key)); }
+  else if (e.key === "r" || e.key === "R") { e.preventDefault(); interromper("repetir"); }
+  else if (e.key === "Backspace") { e.preventDefault(); interromper("voltar"); }
+  else if (e.key === "p" || e.key === "P") { e.preventDefault(); interromper("pular"); }
+  else if (e.key === "Escape") { e.preventDefault(); abrirFormulario(""); }
+});
+window.addEventListener("pagehide", () => IO.parar());
+if (temVoz) $("#btn-voz").focus();
+</script>
+</body>
+</html>
