@@ -141,7 +141,9 @@ const RASCUNHO = "acessiweb-form-rascunho-v1";
 
 /* ═══════════ Questionário ═══════════ */
 const TAREFA = ["Consegui sem dificuldade", "Consegui com dificuldade", "Não consegui", "Não testei"];
-const SUS = { tipo: "escala", min: "discordo totalmente", max: "concordo totalmente", bloco: "Satisfação" };
+const SUS = { tipo: "escala", min: "discordo totalmente", max: "concordo totalmente", meio: ["discordo", "nem discordo nem concordo", "concordo"], bloco: "Satisfação" };
+/** Rótulos dos 5 pontos de uma escala. */
+const rotulosEscala = (q) => [q.min, ...(q.meio || ["", "", ""]), q.max];
 const PERGUNTAS = [
   { id: "consentimento", tipo: "escolha", bloco: "Consentimento", opcoes: ["Sim", "Não"],
     texto: "Este formulário faz parte de um trabalho de conclusão de curso da PUC Minas sobre o AcessiWeb. As respostas são anônimas, usadas apenas na pesquisa, e nenhum áudio é guardado. Você concorda em participar?" },
@@ -155,7 +157,7 @@ const PERGUNTAS = [
 
   { id: "teclado", tipo: "escolha", bloco: "Qualidade do uso", texto: "Você conseguiu usar o AcessiWeb somente com o teclado?",
     opcoes: ["Sim, tudo pelo teclado", "Em parte, precisei do mouse em algumas funções", "Não, precisei do mouse para quase tudo"] },
-  { id: "voz_clara", tipo: "escala", bloco: "Qualidade do uso", texto: "A voz da leitura foi fácil de entender?", min: "muito difícil", max: "muito fácil", explica: true },
+  { id: "voz_clara", tipo: "escala", bloco: "Qualidade do uso", texto: "A voz da leitura foi fácil de entender?", min: "muito difícil", max: "muito fácil", meio: ["difícil", "nem difícil nem fácil", "fácil"], explica: true },
 
   { ...SUS, id: "sus1", explica: true, intro: "Agora, dez frases sobre o AcessiWeb. Para cada uma, diga uma nota de 1 a 5.", texto: "Eu acho que gostaria de usar o AcessiWeb com frequência." },
   { ...SUS, id: "sus2", texto: "Eu acho o AcessiWeb desnecessariamente complexo." },
@@ -396,7 +398,7 @@ function desenharPergunta(q, i) {
   $("#voz-pergunta").textContent = q.texto;
   const lista = $("#voz-opcoes");
   lista.textContent = "";
-  const itens = q.tipo === "escolha" ? q.opcoes : q.tipo === "escala" ? [q.min, "", "", "", q.max] : [];
+  const itens = q.tipo === "escolha" ? q.opcoes : q.tipo === "escala" ? rotulosEscala(q) : [];
   itens.forEach((texto, k) => {
     const li = document.createElement("li"), b = document.createElement("b"), s = document.createElement("span");
     b.textContent = k + 1; s.textContent = texto;
@@ -598,7 +600,7 @@ function construirFormulario() {
     const ob = document.createElement("span"); ob.className = "obrig"; ob.textContent = "(obrigatória)"; leg.append(ob);
     f.append(leg);
     const itens = q.tipo === "escolha" ? q.opcoes.map((o) => [o, o])
-      : [1, 2, 3, 4, 5].map((n) => [n, n === 1 ? `1 — ${q.min}` : n === 5 ? `5 — ${q.max}` : String(n)]);
+      : rotulosEscala(q).map((t, k) => [k + 1, t ? `${k + 1} — ${t}` : String(k + 1)]);
     itens.forEach(([valor, rotulo], k) => {
       const l = document.createElement("label"); l.className = "opcao";
       const inp = document.createElement("input"); inp.type = "radio"; inp.name = q.id; inp.value = valor; inp.id = `r-${q.id}-${k}`;
