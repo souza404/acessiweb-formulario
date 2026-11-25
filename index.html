@@ -81,7 +81,7 @@ pre { white-space: pre-wrap; word-break: break-word; background: var(--painel); 
   <!-- Tela inicial -->
   <section id="tela-inicio" class="inicio" aria-labelledby="titulo">
     <h1 id="titulo">Formulário de validação do AcessiWeb</h1>
-    <p>Conte como foi usar o AcessiWeb. São 28 perguntas e leva cerca de dez minutos. Você pode responder falando ou digitando.</p>
+    <p>Conte como foi usar o AcessiWeb. São 15 perguntas e leva cerca de cinco minutos. Você pode responder falando ou digitando.</p>
     <div class="acoes">
       <button type="button" class="principal" id="btn-voz">Responder por voz
         <small>Eu leio as perguntas e você fala as respostas. Aperte Enter para começar.</small></button>
@@ -134,7 +134,7 @@ const CONFIG = {
   SUPABASE_URL: "https://xxqudvyjsuwvhnhheaxx.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4cXVkdnlqc3V3dmhuaGhlYXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzNzAxNDAsImV4cCI6MjEwNzk0NjE0MH0.bnM6Bvmia7qOZU28zP_U39XtGskmG2dwXjzmYoqPLHc",
   TABELA: "acessiweb_respostas",
-  VERSAO: "1.0",
+  VERSAO: "1.1",
 };
 const MODO_TESTE = new URLSearchParams(location.search).has("teste"); // ?teste=1 mostra as respostas em vez de enviar
 const RASCUNHO = "acessiweb-form-rascunho-v1";
@@ -148,31 +148,14 @@ const PERGUNTAS = [
 
   { id: "visao", tipo: "escolha", bloco: "Perfil", texto: "Como você descreve a sua visão?",
     opcoes: ["Cegueira", "Baixa visão", "Outra condição visual", "Não tenho deficiência visual"] },
-  { id: "recurso", tipo: "escolha", bloco: "Perfil", texto: "Qual recurso de acessibilidade você mais usa no computador?",
-    opcoes: ["NVDA", "JAWS", "Ampliador de tela ou alto contraste", "Outro", "Nenhum"], falas: ["ene vê dê á", "jós", "", "", ""] },
-  { id: "leitor_ligado", tipo: "escolha", bloco: "Perfil", texto: "Durante o teste, você usou um leitor de tela junto com o AcessiWeb?", opcoes: ["Sim", "Não"] },
 
   { id: "instalou", tipo: "escolha", bloco: "Instalação", texto: "Você conseguiu instalar o AcessiWeb?",
     opcoes: ["Sim, sem ajuda", "Sim, com ajuda de outra pessoa", "Não consegui"] },
-  { id: "instrucoes", tipo: "escolha", bloco: "Instalação", texto: "O vídeo e as instruções foram suficientes para instalar e começar a usar?",
-    opcoes: ["Sim, totalmente", "Parcialmente", "Não"] },
 
-  { id: "t_selecao", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, intro: "Agora, seis tarefas. Para cada uma, diga se conseguiu.",
-    texto: "Ouvir a leitura de um texto selecionado." },
-  { id: "t_pagina", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, mesmas: true, texto: "Ouvir a leitura da página inteira." },
-  { id: "t_tab", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, mesmas: true, texto: "Navegar com a tecla Tab ouvindo cada elemento." },
-  { id: "t_imagem", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, mesmas: true, texto: "Ouvir a descrição de uma imagem." },
-  { id: "t_contraste", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, mesmas: true, texto: "Ligar e desligar o alto contraste." },
-  { id: "t_fonte", tipo: "escolha", bloco: "Tarefas", opcoes: TAREFA, mesmas: true, texto: "Aumentar ou diminuir o tamanho da fonte." },
 
   { id: "teclado", tipo: "escolha", bloco: "Qualidade do uso", texto: "Você conseguiu usar o AcessiWeb somente com o teclado?",
     opcoes: ["Sim, tudo pelo teclado", "Em parte, precisei do mouse em algumas funções", "Não, precisei do mouse para quase tudo"] },
   { id: "voz_clara", tipo: "escala", bloco: "Qualidade do uso", texto: "A voz da leitura foi fácil de entender?", min: "muito difícil", max: "muito fácil", explica: true },
-  { id: "descricao_correta", tipo: "escolha", bloco: "Qualidade do uso", texto: "As descrições de imagem corresponderam ao que havia nas imagens?",
-    opcoes: ["Sim", "Parcialmente", "Não", "Não testei"] },
-  { id: "aviso_erro", tipo: "escolha", bloco: "Qualidade do uso", texto: "Quando algo não funcionou, o AcessiWeb avisou você de forma compreensível?",
-    opcoes: ["Sim, fui avisado", "Não fui avisado", "Nada deixou de funcionar"] },
-  { id: "espera", tipo: "escala", bloco: "Qualidade do uso", texto: "O tempo de espera até a voz começar foi aceitável?", min: "inaceitável", max: "totalmente aceitável", explica: true },
 
   { ...SUS, id: "sus1", explica: true, intro: "Agora, dez frases sobre o AcessiWeb. Para cada uma, diga uma nota de 1 a 5.", texto: "Eu acho que gostaria de usar o AcessiWeb com frequência." },
   { ...SUS, id: "sus2", texto: "Eu acho o AcessiWeb desnecessariamente complexo." },
@@ -187,7 +170,6 @@ const PERGUNTAS = [
 
   { id: "barreira", tipo: "aberta", bloco: "Barreiras e sugestões", opcional: true,
     texto: "Você encontrou alguma barreira que impediu a conclusão de uma tarefa? Se sim, descreva." },
-  { id: "comentarios", tipo: "aberta", bloco: "Barreiras e sugestões", opcional: true, texto: "Comentários ou sugestões de melhoria." },
 ];
 const TOTAL = PERGUNTAS.length - 1; // o consentimento não conta como pergunta
 
@@ -498,7 +480,7 @@ function aceitar(q, n) {
 
 const ABERTURA = "Olá! Este é o formulário de validação do AcessiWeb. Eu vou ler cada pergunta. Depois do sinal sonoro, fale a sua resposta. " +
   "Você pode dizer repetir, para ouvir de novo, ou voltar, para a pergunta anterior. Também pode apertar o número da opção no teclado, " +
-  "ou a tecla Esc para responder digitando. São 28 perguntas, cerca de dez minutos. ";
+  "ou a tecla Esc para responder digitando. São 15 perguntas, cerca de cinco minutos. ";
 
 async function conversar() {
   modosUsados.add("voz");
