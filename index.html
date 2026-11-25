@@ -61,8 +61,9 @@ legend { font-weight: 700; padding: 0 0.4rem; max-width: 100%; }
 .opcao { display: flex; gap: 0.7rem; align-items: center; padding: 0.45rem 0; }
 .opcao input { width: 1.5rem; height: 1.5rem; flex: 0 0 auto; accent-color: var(--destaque); }
 .aberta label { display: block; font-weight: 700; margin-bottom: 0.5rem; }
-textarea { width: 100%; min-height: 7rem; font: inherit; color: var(--texto); background: var(--fundo);
+textarea, input[type="text"] { width: 100%; min-height: 7rem; font: inherit; color: var(--texto); background: var(--fundo);
   border: 2px solid var(--borda); border-radius: 0.6rem; padding: 0.7rem; }
+input[type="text"] { min-height: 0; }
 .com-erro { border-color: var(--erro); }
 .msg-erro { color: var(--erro); font-weight: 700; margin: 0.4rem 0 0; }
 .resumo-erros { border: 3px solid var(--erro); border-radius: 0.7rem; padding: 1rem 1.2rem; margin: 1rem 0; }
@@ -81,7 +82,7 @@ pre { white-space: pre-wrap; word-break: break-word; background: var(--painel); 
   <!-- Tela inicial -->
   <section id="tela-inicio" class="inicio" aria-labelledby="titulo">
     <h1 id="titulo">Formulário de validação do AcessiWeb</h1>
-    <p>Conte como foi usar o AcessiWeb. São 15 perguntas e leva cerca de cinco minutos. Você pode responder falando ou digitando.</p>
+    <p>Conte como foi usar o AcessiWeb. São 17 perguntas e leva cerca de cinco minutos. Você pode responder falando ou digitando.</p>
     <div class="acoes">
       <button type="button" class="principal" id="btn-voz">Responder por voz
         <small>Eu leio as perguntas e você fala as respostas. Aperte Enter para começar.</small></button>
@@ -134,7 +135,7 @@ const CONFIG = {
   SUPABASE_URL: "https://xxqudvyjsuwvhnhheaxx.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4cXVkdnlqc3V3dmhuaGhlYXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzNzAxNDAsImV4cCI6MjEwNzk0NjE0MH0.bnM6Bvmia7qOZU28zP_U39XtGskmG2dwXjzmYoqPLHc",
   TABELA: "acessiweb_respostas",
-  VERSAO: "1.1",
+  VERSAO: "1.2",
 };
 const MODO_TESTE = new URLSearchParams(location.search).has("teste"); // ?teste=1 mostra as respostas em vez de enviar
 const RASCUNHO = "acessiweb-form-rascunho-v1";
@@ -146,7 +147,10 @@ const SUS = { tipo: "escala", min: "discordo totalmente", max: "concordo totalme
 const rotulosEscala = (q) => [q.min, ...(q.meio || ["", "", ""]), q.max];
 const PERGUNTAS = [
   { id: "consentimento", tipo: "escolha", bloco: "Consentimento", opcoes: ["Sim", "Não"],
-    texto: "Este formulário faz parte de um trabalho de conclusão de curso da PUC Minas sobre o AcessiWeb. As respostas são anônimas, usadas apenas na pesquisa, e nenhum áudio é guardado. Você concorda em participar?" },
+    texto: "Este formulário faz parte de um trabalho de conclusão de curso da PUC Minas sobre o AcessiWeb. As respostas são confidenciais e usadas apenas na pesquisa, e nenhum áudio é guardado. Você concorda em participar?" },
+
+  { id: "nome", tipo: "aberta", curta: true, opcional: true, bloco: "Identificação", texto: "Qual é o seu nome?" },
+  { id: "idade", tipo: "aberta", curta: true, numerica: true, opcional: true, bloco: "Identificação", texto: "Qual é a sua idade?" },
 
   { id: "visao", tipo: "escolha", bloco: "Perfil", texto: "Como você descreve a sua visão?",
     opcoes: ["Cegueira", "Baixa visão", "Outra condição visual", "Não tenho deficiência visual"] },
@@ -482,7 +486,7 @@ function aceitar(q, n) {
 
 const ABERTURA = "Olá! Este é o formulário de validação do AcessiWeb. Eu vou ler cada pergunta. Depois do sinal sonoro, fale a sua resposta. " +
   "Você pode dizer repetir, para ouvir de novo, ou voltar, para a pergunta anterior. Também pode apertar o número da opção no teclado, " +
-  "ou a tecla Esc para responder digitando. São 15 perguntas, cerca de cinco minutos. ";
+  "ou a tecla Esc para responder digitando. São 17 perguntas, cerca de cinco minutos. ";
 
 async function conversar() {
   modosUsados.add("voz");
@@ -590,7 +594,9 @@ function construirFormulario() {
     if (q.tipo === "aberta") {
       const d = document.createElement("div"); d.className = "aberta"; d.id = "campo-" + q.id;
       const l = document.createElement("label"); l.htmlFor = "r-" + q.id; l.textContent = `${numero}${q.texto} (opcional)`;
-      const t = document.createElement("textarea"); t.id = "r-" + q.id; t.name = q.id; t.value = respostas[q.id] || "";
+      const t = document.createElement(q.curta ? "input" : "textarea");
+      if (q.curta) { t.type = "text"; if (q.numerica) t.inputMode = "numeric"; }
+      t.id = "r-" + q.id; t.name = q.id; t.value = respostas[q.id] || "";
       d.append(l, t); form.append(d);
       return;
     }
